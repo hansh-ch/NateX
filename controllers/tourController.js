@@ -36,7 +36,7 @@ const getAllTours = async (req, res, next) => {
   //  BUILD QUERY FOR FILTERING
   let queryObj={...req.query}
   let excludedFields=["sort","page","limit","fields"]
-  excludedFields.forEach(el=> delete queryObj[el])
+  excludedFields.forEach(el=> delete queryObj[el]) // remove excluded fields from query object so than we can chain these as they are provided , not all at one go
 
   // Advanced filtering
   let queryStr=JSON.stringify(queryObj)
@@ -45,7 +45,7 @@ const getAllTours = async (req, res, next) => {
 
    let query = Tour.find(JSON.parse(queryStr))
 
-// SORTING
+// SORTING ==> => { sort: 'sort1,sort2,sort3' }
 if(req.query.sort){
   const sortBy=req.query.sort.split(',').join(' ')
   query=query.sort(sortBy)
@@ -53,6 +53,14 @@ if(req.query.sort){
   query = query.sort('-createdAt') // newest to oldest
 }
 
+// FIELD LIMITING => { fields: 'field1,field2,field3' }
+if(req.query.fields){
+  const fields=req.query.fields.split(',').join(' ')
+  query=query.select(fields)
+}else{
+  query=query.select('-__v') // exclude __v field from the response
+}
+// console.log(req.query.fields)
 
     const tours = await query;
 
