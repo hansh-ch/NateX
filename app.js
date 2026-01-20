@@ -4,10 +4,8 @@ const qs = require("qs");
 const app = express();
 
 
-// Configure query parser to support nested objects
-app.set("query parser", (str) => {
-  return qs.parse(str, { allowDots: true, depth: 10 });
-});
+
+
 
 // middlewares
 app.use(morgan("dev"));

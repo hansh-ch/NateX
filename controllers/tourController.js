@@ -1,5 +1,24 @@
 const Tour = require("../models/tourModel");
 
+
+// class APIFeatures{
+//     constructor(query,queryString){
+//     this.query=query;
+//     this.queryString=queryString;
+//     };
+//     filter(){
+//       //  BUILD QUERY FOR FILTERING
+//       let queryObj={...this.queryString}
+//       let excludedFields=["sort","page","limit","fields"]
+//       excludedFields.forEach(el=> delete queryObj[el]) // remove excluded fields from query     object so than we can chain these as they are provided , not all at one go
+//       // Advanced filtering
+//       let queryStr=JSON.stringify(queryObj)
+//       queryStr=queryStr.replace(/\b(gte|gt|lte|lt)\b/g,match=>`$${match}`)
+//       this.query.find(JSON.parse(queryStr))
+//       return this;
+//        }
+// }
+
 /*====>    
 Desc : Create tour
 Route: tours/
@@ -11,7 +30,6 @@ const createTour = async (req, res, next) => {
     const tour = await Tour.create(req.body);
     res.status(200).json({
       status: "success",
-
       message: "Tour created successfully",
       data: {
         tour,
@@ -60,7 +78,7 @@ if(req.query.fields){
 }else{
   query=query.select('-__v') // exclude __v field from the response
 }
-// console.log(req.query.fields)
+
 
 
 // PAGINATION=> page 0=1-10 , page 2=11-20 (skip 10), page 3 =21-30(skip-20) so on
@@ -162,6 +180,10 @@ const deleteTour = async (req, res, next) => {
     });
   }
 };
+
+
+
+
 
 module.exports = {
   createTour,
