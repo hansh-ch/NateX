@@ -1,28 +1,12 @@
 const Tour = require("../models/tourModel");
+const { APIFeatures } = require("../utils/apiFeatures");
 
 
-// class APIFeatures{
-//     constructor(query,queryString){
-//     this.query=query;
-//     this.queryString=queryString;
-//     };
-//     filter(){
-//       //  BUILD QUERY FOR FILTERING
-//       let queryObj={...this.queryString}
-//       let excludedFields=["sort","page","limit","fields"]
-//       excludedFields.forEach(el=> delete queryObj[el]) // remove excluded fields from query     object so than we can chain these as they are provided , not all at one go
-//       // Advanced filtering
-//       let queryStr=JSON.stringify(queryObj)
-//       queryStr=queryStr.replace(/\b(gte|gt|lte|lt)\b/g,match=>`$${match}`)
-//       this.query.find(JSON.parse(queryStr))
-//       return this;
-//        }
-// }
 
 /*====>    
 Desc : Create tour
 Route: tours/
-Access: public
+Access: private
 <====*/
 
 const createTour = async (req, res, next) => {
@@ -51,51 +35,12 @@ Access: public
 
 const getAllTours = async (req, res, next) => {
   try {
-  //  BUILD QUERY FOR FILTERING
-  let queryObj={...req.query}
-  let excludedFields=["sort","page","limit","fields"]
-  excludedFields.forEach(el=> delete queryObj[el]) // remove excluded fields from query object so than we can chain these as they are provided , not all at one go
-
-  // Advanced filtering
-  let queryStr=JSON.stringify(queryObj)
-  queryStr=queryStr.replace(/\b(gte|gt|lte|lt)\b/g,match=>`$${match}`)
-
-
-   let query = Tour.find(JSON.parse(queryStr))
-
-// SORTING ==> => { sort: 'sort1,sort2,sort3' }
-if(req.query.sort){
-  const sortBy=req.query.sort.split(',').join(' ')
-  query=query.sort(sortBy)
-}else{
-  query = query.sort('-createdAt') // newest to oldest
-}
-
-// FIELD LIMITING => { fields: 'field1,field2,field3' }
-if(req.query.fields){
-  const fields=req.query.fields.split(',').join(' ')
-  query=query.select(fields)
-}else{
-  query=query.select('-__v') // exclude __v field from the response
-}
-
-
-
-// PAGINATION=> page 0=1-10 , page 2=11-20 (skip 10), page 3 =21-30(skip-20) so on
-
-let page =  (req.query.page*1)||1  // multiply by 1 converts to number
-let limit= (req.query.limit*1)|| 100
-let skip= (page-1)*limit;
-query = query.skip(skip).limit(limit)
-
-// Preventing if page increases and already finished fetching/displaying all docs from DB
-if(req.query.page){
-  const numDocuments=await Tour.countDocuments()
-  if(skip >= numDocuments) throw new Error("This page doesn't exist")
-}
-// Executing query
-    const tours = await query;
-
+    const features= new APIFeatures(Tour.find(),req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+    const tours = await features.query;
     res.status(200).json({
       status: "success",
       results: tours.length,
