@@ -62,6 +62,20 @@ if(req.query.fields){
 }
 // console.log(req.query.fields)
 
+
+// PAGINATION=> page 0=1-10 , page 2=11-20 (skip 10), page 3 =21-30(skip-20) so on
+
+let page =  (req.query.page*1)||1  // multiply by 1 converts to number
+let limit= (req.query.limit*1)|| 100
+let skip= (page-1)*limit;
+query = query.skip(skip).limit(limit)
+
+// Preventing if page increases and already finished fetching/displaying all docs from DB
+if(req.query.page){
+  const numDocuments=await Tour.countDocuments()
+  if(skip >= numDocuments) throw new Error("This page doesn't exist")
+}
+// Executing query
     const tours = await query;
 
     res.status(200).json({
@@ -71,9 +85,9 @@ if(req.query.fields){
       data: tours,
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(404).json({
       status: "fail",
-      message: "Tours fetch failed",
+      message: error.message,
     });
   }
 };
