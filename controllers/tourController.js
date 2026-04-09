@@ -126,6 +126,104 @@ const deleteTour = async (req, res, next) => {
   }
 };
 
+/*====>    
+Desc : Get tours stats using aggregate method
+Route: /stats
+Access: public
+<====*/
+const getToursStats = async (req,res,next) => {
+  try {
+    console.log("object")
+    const stats= await Tour.aggregate([
+      // Filter documents with ratingsAverage criteria
+     {$match: { ratingsAverage: { $gte: 4.5 }}},
+     {  $group:{
+          _id:{ $toUpper: '$difficulty' },
+          num:{$sum:1},
+          numRatings:{$sum:"$ratingsQuantity"},
+          avgRating: {$avg:"$ratingsAverage"},
+          avgPrice: {$avg:"$price"},
+          minPrice: {$min:"$price"},
+          maxPrice: {$max:"$price"},
+     }},
+     {
+      $sort:{
+        avgPrice:1   //ascending order
+      }
+     }
+    ]);
+
+    res.json({
+      status: "success",
+      message: "Stats fetched successfully",
+      data:{
+        stats
+      }
+    });
+  } catch (error) {
+
+    res.json({
+      status: "fail",
+      message: "Fetching failed",
+    });
+
+   
+  }
+}
+
+/*====>    
+Desc : Count how many tours are there in each month of a year
+Route: /monthly-tours/:year
+Access: public
+<====*/
+const getMontlyTours=async (req,res,next) => {
+  try {
+    const year=req.params.year * 1 ;
+    const plan= await Tour.aggregate([
+      {
+        $unwind:"$startDates"
+      },
+      {
+        $match:{
+          startDates:{
+            $gte: new Date(`${year}-01-01`).toISOString(),
+            $lte: new Date(`${year}-12-31`).toISOString(),
+          }
+        }
+      },
+      {
+        $group:{
+          _id: { $month: { $toDate: '$startDates' } },
+           numTours:{$sum:1},
+           tours:{$push:"$name"}
+        }
+      },
+      {
+        $addFields:{month:"$_id"}
+      },
+      {
+        $project:{_id:0}
+      },
+      {
+        $sort:{numTours:-1} 
+      }
+    ])
+
+    res.json({
+      status: "success",
+      message: "Fetched successfully",
+      data:{
+        plan
+      }
+    });
+  } catch (error) {
+    res.json({
+      status: "fail",
+      message: "Fetching failed",
+    });
+  }
+}
+
 
 
 
@@ -136,4 +234,6 @@ module.exports = {
   getTourById,
   updateTour,
   deleteTour,
+  getToursStats,
+  getMontlyTours
 };
