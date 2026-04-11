@@ -56,5 +56,11 @@ userSchema.pre('save', async function () {
     this.confirmPassword = undefined;
 });
 
+// Method for checking password -- instance method available on all docs of collection
+userSchema.methods.isPasswordCorrect = async function (enteredPassword, hashedPassword) {
+    isCorrect = await bcrypt.compare(enteredPassword, hashedPassword,);
+    return isCorrect;
+}
+
 const User = mongoose.model("User", userSchema)
 module.exports = User;
