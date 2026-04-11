@@ -11,12 +11,30 @@ function sendProductionError(err,res){
                 message: err.message,
             })
             }else{
+                console.log("ERROR⚠️", err.message)
                 res.status(500).json({
                     status: 'error',
                     message: 'Something went wrong',
                 });
             }
 }
+
+function handleInvalidIdError(e){
+    const message=`Invalid ${e.path}:${e.value}`
+    return new AppError(message,400)
+}
+
+function handleDuplicateKeyError(err){
+        const field = Object.keys(err.keyValue)[0];
+         const message = `Duplicate field value entered: ${field}. Please use another value.`;
+         return new AppError(message,400)
+}
+
+function handleValidationError(err){
+    const message = Object.values(err.errors).map(val => val.message);
+    return new AppError(message,400)
+}
+
 
 
 const errorHandler=(err,req,res,next)=>{
@@ -31,28 +49,23 @@ const errorHandler=(err,req,res,next)=>{
                 stack: err.stack,
             });  
        }else if(process.env.NODE_ENV==="production"){
-            let error={...err}
-            // Handling mongoDB error
-            if(err.name === 'CastError' && err.kind === 'ObjectId'){
-                function newError (e){
-                    console.log("hello");
-                    const message=`Invalid ${e.path}:${e.value}`
-                    return new AppError(message,400)
-                };
-               
-                error = newError(error)
+            let error = Object.assign(err);
+            error.message = err.message;
+            // Handling mongoDB errors
+            // Invalid ID
+            if(error.name === 'CastError' && error.kind === 'ObjectId'){
+               error=handleInvalidIdError(error);
             }
-
             // Duplicate Key Error
             if (err.code === 11000) {
-                const field = Object.keys(err.keyValue)[0];
-                const message = `Duplicate field value entered: ${field}. Please use another value.`;
-                error = new AppError(message,400);
+                error=handleDuplicateKeyError(error)  
             }
 
-
-
-            sendProductionError(error,res);       
+            //  Mongoose Validation Error
+            if (err.name === 'ValidationError') {
+               error=handleValidationError(error)
+            }
+         sendProductionError(error,res);       
        }
 }
 

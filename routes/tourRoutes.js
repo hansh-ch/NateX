@@ -3,6 +3,7 @@ const {
   getAllTours,
   getTourById,
   createTour,
+  updateTour,
   deleteTour,
   getToursStats,
   getMontlyTours,
@@ -15,7 +16,7 @@ router.route("/stats").get(getToursStats);
 router.route("/monthly-tours/:year").get(getMontlyTours);
 
 router.route("/").get(getAllTours).post(createTour);
-router.route("/:id").get(getTourById).delete(deleteTour);
+router.route("/:id").get(getTourById).delete(deleteTour).patch(updateTour);
 
 
 module.exports = router;
