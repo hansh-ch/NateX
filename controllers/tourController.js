@@ -11,8 +11,7 @@ Route: tours/
 Access: private
 <====*/
 
-const createTour = async (req, res, next) => {
-  try {
+const createTour = catchAsync(async (req, res, next) => {
     const tour = await Tour.create(req.body);
     res.status(200).json({
       status: "success",
@@ -21,14 +20,7 @@ const createTour = async (req, res, next) => {
         tour,
       },
     });
-  } catch (error) {
-    
-    res.status(500).json({
-      status: "fail",
-      message: error.message || "Could not create tour",
-    });
-  }
-};
+});
 
 /*====>    
 Desc : Fetch all tours from DB

@@ -2,6 +2,7 @@ const AppError = require("./appError");
 
 
 function sendProductionError(err,res){
+   
 // We mark error created or thrown by us as operational as error could happen through 
             // 3rd party library
             if (err.isOperational) {
@@ -31,7 +32,6 @@ const errorHandler=(err,req,res,next)=>{
             });  
        }else if(process.env.NODE_ENV==="production"){
             let error={...err}
-            console.log(err)
             // Handling mongoDB error
             if(err.name === 'CastError' && err.kind === 'ObjectId'){
                 function newError (e){
@@ -42,6 +42,16 @@ const errorHandler=(err,req,res,next)=>{
                
                 error = newError(error)
             }
+
+            // Duplicate Key Error
+            if (err.code === 11000) {
+                const field = Object.keys(err.keyValue)[0];
+                const message = `Duplicate field value entered: ${field}. Please use another value.`;
+                error = new AppError(message,400);
+            }
+
+
+
             sendProductionError(error,res);       
        }
 }
