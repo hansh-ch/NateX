@@ -1,4 +1,4 @@
-const AppError = require("./appError");
+const AppError = require("../utils/appError");
 
 
 function sendProductionError(err,res){
