@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
 const bcrypt = require('bcryptjs');
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema({
     name: {
@@ -36,12 +37,14 @@ const userSchema = new mongoose.Schema({
             message: 'Passwords do not match!'
         }
     },
-    passwordChangedAt: Date,
     role: {
         type: String,
         enum: ["user", "admin", "lead-guide"],
         default: "user"
     },
+    passwordChangedAt: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date
 },
     {
         timestamps: true
@@ -56,6 +59,12 @@ userSchema.pre('save', async function () {
     // Delete confirmPassword field ( not store in database)
     this.confirmPassword = undefined;
 });
+
+// Middleware for updating passwordChangedAt timestamp if password is modified
+userSchema.pre("save", function (next) {
+    if (!this.isModified("password") || this.isNew) return;
+    this.passwordChangedAt = Date.now() - 1000;
+})
 
 // Method for checking password -- instance method available on all docs of collection
 userSchema.methods.isPasswordCorrect = async function (enteredPassword, hashedPassword) {
@@ -74,6 +83,16 @@ userSchema.methods.isPasswordChangedAfter = function (jwtTimestamp) {
     // false ==> password not changed
     return false;
 }
+// Instance Method for generating token if user forgot password 
+userSchema.methods.generatePasswordResetToken = function () {
+    const token = crypto.randomBytes(32).toString("hex");
+    this.passwordResetToken = crypto.createHash("sha256").update(token).digest("hex");
+    this.passwordResetExpires = Date.now() + 5 * 60 * 1000; // 5mins
+    return token;
+};
+
+
+
 
 const User = mongoose.model("User", userSchema)
 module.exports = User;

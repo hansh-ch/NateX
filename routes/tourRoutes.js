@@ -16,7 +16,7 @@ router.route("/top-5-cheap").get(aliasTopTours, getAllTours)
 router.route("/stats").get(getToursStats);
 router.route("/monthly-tours/:year").get(getMontlyTours);
 
-router.route("/").get(protectAuth, restrictTo("admin", "lead-guide"), getAllTours).post(createTour);
+router.route("/").get(protectAuth, restrictTo("user", "lead-guide"), getAllTours).post(createTour);
 router.route("/:id").get(getTourById).delete(protectAuth, restrictTo("admin", "lead-guide"), deleteTour).patch(updateTour);
 
 
