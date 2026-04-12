@@ -13,6 +13,31 @@ const createJWTToken = function (id) {
     return token;
 }
 
+
+const generateAndSendTokenAsCookie = (user, statusCode, res) => {
+    const token = createJWTToken(user._id);
+
+    const cookieOptions = {
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        httpOnly: true, // Prevents client-side JS from accessing the cookie
+        secure: process.env.NODE_ENV === 'production' // Only send over HTTPS in production
+    };
+
+    // Send the cookie
+    res.cookie('jwt', token, cookieOptions);
+
+    // Remove sensitive data before sending back to client
+    user.password = undefined;
+
+    res.status(statusCode).json({
+        status: 'success',
+        token,
+        data: {
+            user
+        }
+    });
+};
+
 /*====>    
 Desc : Signup new user
 Route: users/signup
@@ -24,14 +49,10 @@ exports.signupUser = catchAsync(async (req, res, next) => {
     if (!user) {
         next(new AppError("Signup failed", 404))
     }
-    // Creating token
-    const token = createJWTToken(user._id)
-    if (!token) {
-        next(new AppError("Signup failed", 404));
-    }
+    // JWT token
+    generateAndSendTokenAsCookie(user, 201, res);
     res.status(201).json({
         status: "success",
-        token,
         data: {
             user
         }
@@ -55,12 +76,8 @@ exports.loginUser = catchAsync(async (req, res, next) => {
 
     const iscorrect = await user.isPasswordCorrect(password, user.password);
     if (!iscorrect) return next(new AppError("Incorrect email or password", 400));
-    const token = createJWTToken(user._id);
-
-    res.status(201).json({
-        status: "success",
-        token,
-    })
+    //JWT-TOKEN
+    generateAndSendTokenAsCookie(user, 201, res);
 })
 
 
@@ -155,11 +172,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     user.passwordResetExpires = undefined;
     await user.save();
     // Sending jwt token to user
-    const jwtToken = createJWTToken(user._id);
-    res.status(201).json({
-        status: "success",
-        token: jwtToken,
-    })
+    generateAndSendTokenAsCookie(user, 201, res);
 })
 
 /*====>    
