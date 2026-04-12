@@ -37,14 +37,15 @@ const userSchema = new mongoose.Schema({
         }
     },
     passwordChangedAt: Date,
-    active: {
-        type: Boolean,
-        default: true,
-        select: false
-    }
-}, {
-    timestamps: true
-});
+    role: {
+        type: String,
+        enum: ["user", "admin", "lead-guide"],
+        default: "user"
+    },
+},
+    {
+        timestamps: true
+    });
 
 // Encrypting password before saving
 userSchema.pre('save', async function () {
