@@ -65,22 +65,6 @@ exports.loginUser = catchAsync(async (req, res, next) => {
 
 
 
-/*====>    
-Desc : Fetch all user
-Route: users/
-Access: private
-<====*/
-
-exports.getAllUser = catchAsync(async (req, res, next) => {
-
-    const users = await User.find();
-    res.status(201).json({
-        status: "success",
-        data: {
-            users
-        }
-    })
-})
 
 /*====>    
 Desc : protect authentication

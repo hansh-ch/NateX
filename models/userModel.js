@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema({
         enum: ["user", "admin", "lead-guide"],
         default: "user"
     },
+    isActive: {
+        type: Boolean,
+        default: true,
+        select: false
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
     passwordResetExpires: Date
@@ -65,6 +70,11 @@ userSchema.pre("save", function (next) {
     if (!this.isModified("password") || this.isNew) return;
     this.passwordChangedAt = Date.now() - 1000;
 })
+
+// Middleware to select all active users
+userSchema.pre(/^find/, function () {
+    this.find({ isActive: { $ne: false } });
+});
 
 // Method for checking password -- instance method available on all docs of collection
 userSchema.methods.isPasswordCorrect = async function (enteredPassword, hashedPassword) {
